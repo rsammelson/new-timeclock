@@ -1,6 +1,10 @@
-import backend.processOptions
+from backend import processOptions, timeFilesManager
 
 
 def initBackend():
-    global timeclockOpts
-    timeclockOpts = backend.processOptions.loadOpts()
+    processOptions.loadOpts()
+    timeFilesManager.load()
+
+
+def initGUI():
+    pass
