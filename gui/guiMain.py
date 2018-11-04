@@ -12,6 +12,9 @@ from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QGridLayout,
 import backend.processOptions as opts
 import backend.timeFilesManager as timeManager
 
+currentTable = None
+lastSelectedRow = None
+
 
 def initGUI():
     app = QApplication([])
@@ -63,59 +66,94 @@ def makeNameArea():
     tabs = QTabWidget()
     tabs.setStyleSheet(
         "QTabBar::tab {width: 110px; height:40px} QTabBar::scroller{width:50px;}")
-    for i in opts.timeclockOpts["teams"]:
+
+    tab = makeNamelist(timeManager.nameList)
+    global currentTable
+    currentTable = tab
+    tabs.addTab(tab, opts.timeclockOpts["teams"][0])
+    for i in opts.timeclockOpts["teams"][1:]:
         tab = makeNamelist(timeManager.nameList)
         tabs.addTab(tab, i)
+
+    def setCurrentTable():
+        global currentTable
+        global lastSelectedRow
+        if lastSelectedRow != None:
+            for i in range(currentTable.columnCount()):
+                currentTable.item(lastSelectedRow, i).setSelected(False)
+        lastSelectedRow = None
+        currentTable = tabs.currentWidget()
+    tabs.currentChanged.connect(setCurrentTable)
+
     return tabs
 
 
+def makeTableItem(text):
+    item = QTableWidgetItem()
+    item.setText(text)
+    item.setFlags(Qt.ItemIsEnabled)
+    item.setFlags(Qt.ItemIsSelectable)
+    return item
+
+
 def makeNamelist(names):
-    table = QTableWidget()
-    table.setFixedSize(994, 450)  # 451
-    table.setRowCount(len(names))  # NAMES
-    table.setColumnCount(4)
-    table.setShowGrid(False)
-    table.verticalScrollBar().setStyleSheet(
+    namesTable = QTableWidget()
+    namesTable.setFixedSize(994, 450)  # 451
+    namesTable.setRowCount(len(names))  # NAMES
+    namesTable.setColumnCount(4)
+    namesTable.setShowGrid(False)
+    namesTable.verticalScrollBar().setStyleSheet(
         "QScrollBar:vertical{width: 60px;}")
-    table.verticalHeader().hide()
+    namesTable.verticalHeader().hide()
+    ntPalette = namesTable.palette()
+    ntPalette.setColor(QtGui.QPalette.Text, Qt.black)
+    namesTable.setPalette(ntPalette)
+
+    def setLastRow(r, *args):
+        global lastSelectedRow
+        for i in range(namesTable.columnCount()):
+            if lastSelectedRow != None:
+                namesTable.item(lastSelectedRow, i).setSelected(False)
+            namesTable.item(r, i).setSelected(True)
+        lastSelectedRow = r
+    namesTable.cellClicked.connect(setLastRow)
+
     headers = ["Name", "Graph", "Hours", "I/O"]
     for header in range(len(headers)):
         headItem = QTableWidgetItem()
         headItem.setText(headers[header])
-        table.setHorizontalHeaderItem(header, headItem)
-    for i in range(table.rowCount()):
-        nameItem = QTableWidgetItem()
-        nameItem.setText(names[i])
-        nameItem.setFlags(Qt.ItemIsEnabled)
-        table.setItem(i, 0, nameItem)
+        namesTable.setHorizontalHeaderItem(header, headItem)
+
+    for i in range(namesTable.rowCount()):
+        nameItem = makeTableItem(names[i])
+        namesTable.setItem(i, 0, nameItem)
         #
-        graphItem = QTableWidgetItem()
-        graphItem.setText("█" * random.randrange(0, 25))
-        graphItem.setFlags(Qt.ItemIsEnabled)
+        graphItem = makeTableItem("█" * random.randrange(0, 25))
         graphFont = graphItem.font()
-        # graphFont.setPointSize(3.5)
         graphFont.setStretch(25)
         graphFont.setLetterSpacing(QtGui.QFont.AbsoluteSpacing, 0)
         graphItem.setFont(graphFont)
-        table.setItem(i, 1, graphItem)
+        namesTable.setItem(i, 1, graphItem)
         #
-        hoursItem = QTableWidgetItem()
-        hoursItem.setText(str(random.randrange(10000, 99999)))
-        hoursItem.setFlags(Qt.ItemIsEnabled)
-        table.setItem(i, 2, hoursItem)
+        hoursItem = makeTableItem(str(random.randrange(0, 99999)))
+        namesTable.setItem(i, 2, hoursItem)
         #
-        ioItem = QTableWidgetItem()
-        ioItem.setText(random.choice(["i", "o"]))
-        ioItem.setFlags(Qt.ItemIsEnabled)
+        ioItem = makeTableItem(random.choice(["i", "o", "i", "o", "a"]))
+        ioFont = QtGui.QFont("Courier New", 14)
+        ioFont.setBold(True)
+        if ioItem.text() != "i" and ioItem.text() == "o":
+            ioItem.setForeground(QtGui.QBrush(Qt.red))
+        ioItem.setFont(ioFont)
         ioItem.setTextAlignment(Qt.AlignRight)
-        table.setItem(i, 3, ioItem)
-    table.setVisible(False)
-    table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-    table.setColumnWidth(1, 100)
-    table.resizeColumnToContents(2)
-    table.resizeColumnToContents(3)
-    table.setVisible(True)
-    return table
+        namesTable.setItem(i, 3, ioItem)
+
+    namesTable.setVisible(False)
+    namesTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+    namesTable.setColumnWidth(1, 100)
+    namesTable.resizeColumnToContents(2)
+    namesTable.resizeColumnToContents(3)
+    namesTable.setVisible(True)
+    return namesTable
 
 
 def makeActions():
@@ -134,6 +172,16 @@ def makeActions():
     signO.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
     signO.setStyleSheet(
         'QPushButton {background-color: red; color: white; font-size: 28pt; font-weight: bold}')
+
+    def doIO(io):
+        if currentTable != None and lastSelectedRow != None:
+            timeManager.signIO(currentTable.item(
+                lastSelectedRow, 0).text(), io)
+        else:
+            print("No item", currentTable != None, lastSelectedRow != None)
+
+    signI.clicked.connect(lambda: doIO("i"))
+    signO.clicked.connect(lambda: doIO("o"))
 
     more = QPushButton("More...")
     newUser = QPushButton("New User")
