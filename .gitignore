@@ -1,5 +1,6 @@
 times/
-data/
+data/*
+!data/assets/time.png
 
 # PYTHON GITIGNORE
 

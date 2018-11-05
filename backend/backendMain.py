@@ -1,3 +1,5 @@
+# Copyright (c) 2018 Robert J Sammelson - All Rights Reserved
+
 from backend import processOptions, timeFilesManager
 
 

@@ -1,3 +1,6 @@
+# Copyright (c) 2018 Robert J Sammelson - All Rights Reserved
+
+import math
 import random
 
 import PyQt5
@@ -67,12 +70,15 @@ def makeNameArea():
     tabs.setStyleSheet(
         "QTabBar::tab {width: 110px; height:40px} QTabBar::scroller{width:50px;}")
 
-    tab = makeNamelist(timeManager.nameList)
-    global currentTable
-    currentTable = tab
-    tabs.addTab(tab, opts.timeclockOpts["teams"][0])
-    for i in opts.timeclockOpts["teams"][1:]:
-        tab = makeNamelist(timeManager.nameList)
+    for i in opts.timeclockOpts["teams"]:
+        currentNames = []
+        for j in timeManager.nameList:
+            if i in timeManager.getJobs(j):
+                currentNames.append(j)
+        tab = makeNamelist(currentNames)
+        if i == opts.timeclockOpts["teams"][0]:
+            global currentTable
+            currentTable = tab
         tabs.addTab(tab, i)
 
     def setCurrentTable():
@@ -89,6 +95,7 @@ def makeNameArea():
 
 
 def makeTableItem(text):
+    text = str(text)
     item = QTableWidgetItem()
     item.setText(text)
     item.setFlags(Qt.ItemIsEnabled)
@@ -102,11 +109,15 @@ def makeNamelist(names):
     namesTable.setRowCount(len(names))  # NAMES
     namesTable.setColumnCount(4)
     namesTable.setShowGrid(False)
-    namesTable.verticalScrollBar().setStyleSheet(
-        "QScrollBar:vertical{width: 60px;}")
+    scroller = namesTable.verticalScrollBar()
+    scroller.setStyleSheet("QScrollBar:vertical{width: 50px;}")
+    # QScrollBar::left-arrow:vertical, QScrollBar::right-arrow:vertical{height:100px;}
     namesTable.verticalHeader().hide()
     ntPalette = namesTable.palette()
-    ntPalette.setColor(QtGui.QPalette.Text, Qt.black)
+    if opts.timeclockOpts["darkTheme"]:
+        ntPalette.setColor(QtGui.QPalette.Text, Qt.white)
+    else:
+        ntPalette.setColor(QtGui.QPalette.Text, Qt.black)
     namesTable.setPalette(ntPalette)
 
     def setLastRow(r, *args):
@@ -128,20 +139,25 @@ def makeNamelist(names):
         nameItem = makeTableItem(names[i])
         namesTable.setItem(i, 0, nameItem)
         #
-        graphItem = makeTableItem("█" * random.randrange(0, 25))
+        # graphItem = makeTableItem("█")
+        graphItem = makeTableItem("")
         graphFont = graphItem.font()
         graphFont.setStretch(25)
         graphFont.setLetterSpacing(QtGui.QFont.AbsoluteSpacing, 0)
         graphItem.setFont(graphFont)
         namesTable.setItem(i, 1, graphItem)
         #
-        hoursItem = makeTableItem(str(random.randrange(0, 99999)))
+        hours = timeManager.getHours(names[i])
+        hoursInt = math.floor(hours)
+        hoursString = str(hoursInt)
+        minutesString = str(math.floor((hours - hoursInt) * 60))
+        hoursItem = makeTableItem(hoursString + ":" + minutesString)
         namesTable.setItem(i, 2, hoursItem)
         #
-        ioItem = makeTableItem(random.choice(["i", "o", "i", "o", "a"]))
+        ioItem = makeTableItem(timeManager.getCurrentIO(names[i]))
         ioFont = QtGui.QFont("Courier New", 14)
         ioFont.setBold(True)
-        if ioItem.text() != "i" and ioItem.text() == "o":
+        if ioItem.text() != "i" and ioItem.text() != "o":
             ioItem.setForeground(QtGui.QBrush(Qt.red))
         ioItem.setFont(ioFont)
         ioItem.setTextAlignment(Qt.AlignRight)
@@ -183,21 +199,23 @@ def makeActions():
     signI.clicked.connect(lambda: doIO("i"))
     signO.clicked.connect(lambda: doIO("o"))
 
-    more = QPushButton("More...")
+    more = QPushButton("More user information")
     newUser = QPushButton("New User")
     graph = QPushButton("Graph")
+    update = QPushButton("Update")
     quit = QPushButton("Quit")
     more.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
     newUser.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
     graph.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+    update.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
     quit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-    more.setStyleSheet('QPushButton {font-weight: bold}')
     quit.setStyleSheet('QPushButton {color: red}')
 
     actionsLayout.addWidget(signI, 0, 0, 3, 2)
     actionsLayout.addWidget(signO, 0, 2, 3, 2)
-    actionsLayout.addWidget(more, 0, 4, 2, 1)
+    # actionsLayout.addWidget(more, 0, 4, 2, 1)
     actionsLayout.addWidget(newUser, 2, 4)
-    actionsLayout.addWidget(graph, 0, 5)
+    # actionsLayout.addWidget(graph, 0, 5)
+    actionsLayout.addWidget(update, 1, 5)
     actionsLayout.addWidget(quit, 2, 5)
     return actionsLayout
