@@ -46,7 +46,6 @@ def signIO(user, io):
     with open(getUserPath(user), 'a') as userFile:
         userFile.write(signDataJson)
         userFile.write("\n")
-    print(getHours(user))
 
 
 def getHours(user):
@@ -73,7 +72,8 @@ def processHours(data):
                 totalTime += io["time"] - lastTime
         else:
             print("processHours type error:", io["type"])
-    print(totalTime)
+    if opts.timeclockOpts["addHoursBeforeSignout"] and lastState == "i":
+        totalTime += datetime.datetime.now() - lastTime
     hours = totalTime.total_seconds() / 60.0**2
     return hours
 

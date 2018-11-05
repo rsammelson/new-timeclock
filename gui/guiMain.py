@@ -15,11 +15,13 @@ from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QGridLayout,
 import backend.processOptions as opts
 import backend.timeFilesManager as timeManager
 
+tabsObject = None
+
 currentTable = None
 lastSelectedRow = None
 
 
-def initGUI():
+def startGUI():
     app = QApplication([])
     app.setStyle('Fusion')
     if opts.timeclockOpts["darkTheme"]:
@@ -32,14 +34,19 @@ def initGUI():
     mainLayout.setSpacing(20)
 
     mainLayout.addLayout(makeTitle())
-    mainLayout.addWidget(makeNameArea())
-    mainLayout.addLayout(makeActions())
+
+    global tabsObject
+    tabsObject = makeNameArea()
+    mainLayout.addWidget(tabsObject)
+    updateNamesTable()
+
+    mainLayout.addLayout(makeActions(app))
 
     window.setLayout(mainLayout)
     window.show()
     print("1024  x  768")
     print(window.width(), " x ", window.height())
-    print(1024 - window.width(), "\t", 768 - window.height())
+    print("", 1024 - window.width(), "\t", 768 - window.height())
     app.exec_()
 
 
@@ -139,7 +146,6 @@ def makeNamelist(names):
         nameItem = makeTableItem(names[i])
         namesTable.setItem(i, 0, nameItem)
         #
-        # graphItem = makeTableItem("█")
         graphItem = makeTableItem("")
         graphFont = graphItem.font()
         graphFont.setStretch(25)
@@ -147,18 +153,12 @@ def makeNamelist(names):
         graphItem.setFont(graphFont)
         namesTable.setItem(i, 1, graphItem)
         #
-        hours = timeManager.getHours(names[i])
-        hoursInt = math.floor(hours)
-        hoursString = str(hoursInt)
-        minutesString = str(math.floor((hours - hoursInt) * 60))
-        hoursItem = makeTableItem(hoursString + ":" + minutesString)
+        hoursItem = makeTableItem("")
         namesTable.setItem(i, 2, hoursItem)
         #
-        ioItem = makeTableItem(timeManager.getCurrentIO(names[i]))
+        ioItem = makeTableItem("")
         ioFont = QtGui.QFont("Courier New", 14)
         ioFont.setBold(True)
-        if ioItem.text() != "i" and ioItem.text() != "o":
-            ioItem.setForeground(QtGui.QBrush(Qt.red))
         ioItem.setFont(ioFont)
         ioItem.setTextAlignment(Qt.AlignRight)
         namesTable.setItem(i, 3, ioItem)
@@ -172,7 +172,30 @@ def makeNamelist(names):
     return namesTable
 
 
-def makeActions():
+def updateNamesTable():
+    global tabsObject
+    for i in range(tabsObject.count()):
+        table = tabsObject.widget(i)
+        for j in range(table.rowCount()):
+            name = table.item(j, 0).text()
+
+            table.item(j, 1).setText("█" * 0)
+
+            hours = timeManager.getHours(name)
+            hoursInt = math.floor(hours)
+            hourString = str(hoursInt)
+            minuteString = str(math.floor((hours - hoursInt) * 60))
+            table.item(j, 2).setText(hourString + ":" + minuteString)
+
+            ioItem = table.item(j, 3)
+            ioItem.setText(timeManager.getCurrentIO(name))
+            if ioItem.text() != "i" and ioItem.text() != "o":
+                ioItem.setForeground(QtGui.QBrush(Qt.red))
+            else:
+                ioItem.setForeground(QtGui.QBrush(Qt.black))
+
+
+def makeActions(app):
     actionsLayout = QGridLayout()
     actionsLayout.setVerticalSpacing(5)
 
@@ -195,6 +218,7 @@ def makeActions():
                 lastSelectedRow, 0).text(), io)
         else:
             print("No item", currentTable != None, lastSelectedRow != None)
+        updateNamesTable()
 
     signI.clicked.connect(lambda: doIO("i"))
     signO.clicked.connect(lambda: doIO("o"))
@@ -210,6 +234,9 @@ def makeActions():
     update.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
     quit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
     quit.setStyleSheet('QPushButton {color: red}')
+
+    update.clicked.connect(updateNamesTable)
+    quit.clicked.connect(lambda: app.closeAllWindows())
 
     actionsLayout.addWidget(signI, 0, 0, 3, 2)
     actionsLayout.addWidget(signO, 0, 2, 3, 2)
