@@ -1,5 +1,3 @@
-# Copyright (c) 2018 Robert J Sammelson - All Rights Reserved
-
 import os
 
 loadOptions = True
