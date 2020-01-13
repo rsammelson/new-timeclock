@@ -10,12 +10,16 @@ tempUserArray = {}
 
 def load():
     os.chdir(os.path.dirname(__file__))
+
+    if not os.path.exists("../times/"):
+        os.mkdir("../times/")
+
     global nameList
     nameList = []
     for filename in os.listdir("../times/"):
         if filename.endswith(".json"):
             name = os.path.splitext(filename)[0]
-            nameList.append(name.replace("_", " "))
+            nameList.append(name.replace("_", " ").title())
 
 
 def getUserPath(user):
@@ -24,7 +28,7 @@ def getUserPath(user):
 
 def getJobs(user):
     os.chdir(os.path.dirname(__file__))
-    user = user.replace(" ", "_")
+    user = user.replace(" ", "_").lower()
     line = ""
     with open(getUserPath(user)) as userFile:
         line = userFile.readline()
@@ -37,18 +41,26 @@ def getJobs(user):
 
 def signIO(user, io):
     os.chdir(os.path.dirname(__file__))
-    user = user.replace(" ", "_")
+    user = user.replace(" ", "_").lower()
     # {"type":"IO", "time": "yyyy-mm-ddThh:mm:ss"}
     signData = {"type": io, "time": datetime.datetime.now()}
     signDataJson = rapidjson.dumps(signData, datetime_mode=DM_ISO8601)
+
+    addNewline = False
+    with open(getUserPath(user), 'r') as userFile:
+        lastLine = userFile.readlines()[-1]
+        addNewline = lastLine[-1] != "\n"
+
     with open(getUserPath(user), 'a') as userFile:
+        if addNewline:
+            userFile.write("\n")
         userFile.write(signDataJson)
         userFile.write("\n")
 
 
 def getHours(user):
     os.chdir(os.path.dirname(__file__))
-    user = user.replace(" ", "_")
+    user = user.replace(" ", "_").lower()
     lines = []
     with open(getUserPath(user)) as userFile:
         lines = userFile.readlines()[1:]
@@ -78,7 +90,7 @@ def processHours(data):
 
 def getCurrentIO(user):
     os.chdir(os.path.dirname(__file__))
-    user = user.replace(" ", "_")
+    user = user.replace(" ", "_").lower()
     io = "o"
     with open(getUserPath(user)) as userFile:
         lines = userFile.readlines()

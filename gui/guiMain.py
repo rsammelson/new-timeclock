@@ -73,7 +73,7 @@ def makeTitle():
 def makeNameArea():
     tabs = QTabWidget()
     tabs.setStyleSheet(
-        "QTabBar::tab {width: 110px; height:40px} QTabBar::scroller{width:50px;}")
+        "QTabBar::tab {width: 150px; height:40px} QTabBar::scroller{width:50px;}")
 
     for i in opts.timeclockOpts["teams"]:
         currentNames = []
@@ -182,8 +182,9 @@ def updateNamesTable():
             hours = timeManager.getHours(name)
             hoursInt = math.floor(hours)
             hourString = str(hoursInt)
-            minuteString = str(math.floor((hours - hoursInt) * 60))
-            table.item(j, 2).setText(hourString + ":" + minuteString)
+            minuteInt = math.floor((hours - hoursInt) * 60)
+            minuteString = str(minuteInt)
+            table.item(j, 2).setText(hourString + ":" + ("" if minuteInt > 9 else "0") + minuteString)
 
             ioItem = table.item(j, 3)
             ioItem.setText(timeManager.getCurrentIO(name))
