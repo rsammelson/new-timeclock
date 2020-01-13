@@ -7,7 +7,6 @@ from rapidjson import DM_ISO8601
 
 tempUserArray = {}
 
-
 def load():
     os.chdir(os.path.dirname(__file__))
 
@@ -39,7 +38,10 @@ def getJobs(user):
         return []
 
 
-def signIO(user, io):
+def signIO(user, io, preupdate=True):
+    if preupdate:
+        getHours(user) # make sure auto-clockout check runs before logging sign in/out
+
     os.chdir(os.path.dirname(__file__))
     user = user.replace(" ", "_").lower()
     # {"type":"IO", "time": "yyyy-mm-ddThh:mm:ss"}
@@ -62,8 +64,29 @@ def getHours(user):
     os.chdir(os.path.dirname(__file__))
     user = user.replace(" ", "_").lower()
     lines = []
+    addAutoClockout = False
     with open(getUserPath(user)) as userFile:
         lines = userFile.readlines()[1:]
+        
+        # Auto-clockout (prevents users from getting time from forgetting to sign out)
+        autoClockoutTime = datetime.time.fromisoformat(opts.timeclockOpts["autoClockoutTime"])
+        lastIO = rapidjson.loads(lines[-1], datetime_mode=DM_ISO8601)
+
+        if lastIO["type"] == "i":
+            if datetime.datetime.now() - lastIO["time"] > datetime.timedelta(hours=20): # if signed in for more than 20 hours
+                addAutoClockout = True
+            elif lastIO["time"].date() == datetime.date.today(): # if signed in on current day
+                # check if auto-clockout time occurred after sign in but before now
+                if lastIO["time"].time() < autoClockoutTime and autoClockoutTime < datetime.datetime.now().time():
+                    addAutoClockout = True
+            elif lastIO["time"].date() < datetime.date.today(): # if signed in on previous day
+                # check that it is past auto-clockout time
+                if datetime.datetime.now().time() > autoClockoutTime:
+                    addAutoClockout = True
+
+    if addAutoClockout:
+        signIO(user, "a", False)
+        lines.append('{"type": "a", "time": "%s"}' % datetime.datetime.now())
 
     return processHours([rapidjson.loads(line, datetime_mode=DM_ISO8601) for line in lines])
 
@@ -80,6 +103,9 @@ def processHours(data):
             if lastState == "i":
                 lastState = "o"
                 totalTime += io["time"] - lastTime
+        elif io["type"] == "a":
+            lastState = "o"
+            lastTime = io["time"]
         else:
             print("processHours type error:", io["type"])
     if opts.timeclockOpts["addHoursBeforeSignout"] and lastState == "i":

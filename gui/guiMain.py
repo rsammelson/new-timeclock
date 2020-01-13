@@ -188,10 +188,14 @@ def updateNamesTable():
 
             ioItem = table.item(j, 3)
             ioItem.setText(timeManager.getCurrentIO(name))
-            if ioItem.text() != "i" and ioItem.text() != "o":
+            if ioItem.text() == "i":
+                ioItem.setForeground(QtGui.QBrush(Qt.darkGreen))
+            elif ioItem.text() == "o":
+                ioItem.setForeground(QtGui.QBrush(Qt.black))
+            elif ioItem.text() == "a":
                 ioItem.setForeground(QtGui.QBrush(Qt.red))
             else:
-                ioItem.setForeground(QtGui.QBrush(Qt.black))
+                ioItem.setForeground(QtGui.QBrush(Qt.yellow))
 
 
 def makeActions(app):
