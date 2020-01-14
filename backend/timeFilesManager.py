@@ -3,7 +3,6 @@ import os
 
 import backend.processOptions as opts
 import rapidjson
-from rapidjson import DM_ISO8601
 
 tempUserArray = {}
 
@@ -46,7 +45,7 @@ def signIO(user, io, preupdate=True):
     user = user.replace(" ", "_").lower()
     # {"type":"IO", "time": "yyyy-mm-ddThh:mm:ss"}
     signData = {"type": io, "time": datetime.datetime.now()}
-    signDataJson = rapidjson.dumps(signData, datetime_mode=DM_ISO8601)
+    signDataJson = rapidjson.dumps(signData, datetime_mode=rapidjson.DM_ISO8601)
 
     addNewline = False
     with open(getUserPath(user), 'r') as userFile:
@@ -70,25 +69,29 @@ def getHours(user):
         
         # Auto-clockout (prevents users from getting time from forgetting to sign out)
         autoClockoutTime = datetime.time.fromisoformat(opts.timeclockOpts["autoClockoutTime"])
-        lastIO = rapidjson.loads(lines[-1], datetime_mode=DM_ISO8601)
 
-        if lastIO["type"] == "i":
-            if datetime.datetime.now() - lastIO["time"] > datetime.timedelta(hours=20): # if signed in for more than 20 hours
-                addAutoClockout = True
-            elif lastIO["time"].date() == datetime.date.today(): # if signed in on current day
-                # check if auto-clockout time occurred after sign in but before now
-                if lastIO["time"].time() < autoClockoutTime and autoClockoutTime < datetime.datetime.now().time():
+        try:
+            lastIO = rapidjson.loads(lines[-1], datetime_mode=DM_ISO8601)
+
+            if lastIO["type"] == "i":
+                if datetime.datetime.now() - lastIO["time"] > datetime.timedelta(hours=20): # if signed in for more than 20 hours
                     addAutoClockout = True
-            elif lastIO["time"].date() < datetime.date.today(): # if signed in on previous day
-                # check that it is past auto-clockout time
-                if datetime.datetime.now().time() > autoClockoutTime:
-                    addAutoClockout = True
+                elif lastIO["time"].date() == datetime.date.today(): # if signed in on current day
+                    # check if auto-clockout time occurred after sign in but before now
+                    if lastIO["time"].time() < autoClockoutTime and autoClockoutTime < datetime.datetime.now().time():
+                        addAutoClockout = True
+                elif lastIO["time"].date() < datetime.date.today(): # if signed in on previous day
+                    # check that it is past auto-clockout time
+                    if datetime.datetime.now().time() > autoClockoutTime:
+                        addAutoClockout = True
+        except:
+            pass
 
     if addAutoClockout:
         signIO(user, "a", False)
         lines.append('{"type": "a", "time": "%s"}' % datetime.datetime.now())
 
-    return processHours([rapidjson.loads(line, datetime_mode=DM_ISO8601) for line in lines])
+    return processHours([rapidjson.loads(line, datetime_mode=rapidjson.DM_ISO8601) for line in lines])
 
 
 def processHours(data):
