@@ -1,11 +1,9 @@
 import math
 import random
 
-import PyQt5
-import qdarkstyle
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QAbstractItemView, QApplication, QGridLayout,
+from PyQt6 import QtCore, QtGui
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (QAbstractItemView, QApplication, QGridLayout,
                              QHBoxLayout, QHeaderView, QLabel, QPushButton,
                              QSizePolicy, QTableWidget, QTableWidgetItem,
                              QTabWidget, QVBoxLayout, QWidget)
@@ -23,7 +21,7 @@ def startGUI():
     app = QApplication([])
     app.setStyle('Fusion')
     if opts.timeclockOpts["darkTheme"]:
-        app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+        pass
     window = QWidget()
     window.setWindowTitle(opts.timeclockOpts["title"])
     window.setWindowIcon(QtGui.QIcon(
@@ -45,13 +43,13 @@ def startGUI():
     print("1024  x  768")
     print(window.width(), " x ", window.height())
     print("", 1024 - window.width(), "\t", 768 - window.height())
-    app.exec_()
+    app.exec()
 
 
 def makeTitle():
     titleLayout = QHBoxLayout()
     # titleLayout.setSpacing(42)
-    titleFont = QtGui.QFont("Times", 32, QtGui.QFont.Bold)
+    titleFont = QtGui.QFont("Times", 32, QtGui.QFont.Weight.Bold)
 
     title = QLabel(opts.timeclockOpts["title"])
     title.setFixedWidth(820)
@@ -103,8 +101,8 @@ def makeTableItem(text):
     text = str(text)
     item = QTableWidgetItem()
     item.setText(text)
-    item.setFlags(Qt.ItemIsEnabled)
-    item.setFlags(Qt.ItemIsSelectable)
+    item.setFlags(Qt.ItemFlags.ItemIsEnabled)
+    item.setFlags(Qt.ItemFlags.ItemIsSelectable)
     return item
 
 
@@ -120,9 +118,9 @@ def makeNamelist(names):
     namesTable.verticalHeader().hide()
     ntPalette = namesTable.palette()
     if opts.timeclockOpts["darkTheme"]:
-        ntPalette.setColor(QtGui.QPalette.Text, Qt.white)
+        ntPalette.setColor(QtGui.QPalette.ColorRole.Text, Qt.GlobalColor.white)
     else:
-        ntPalette.setColor(QtGui.QPalette.Text, Qt.black)
+        ntPalette.setColor(QtGui.QPalette.ColorRole.Text, Qt.GlobalColor.black)
     namesTable.setPalette(ntPalette)
 
     def setLastRow(r, *args):
@@ -147,7 +145,7 @@ def makeNamelist(names):
         graphItem = makeTableItem("")
         graphFont = graphItem.font()
         graphFont.setStretch(25)
-        graphFont.setLetterSpacing(QtGui.QFont.AbsoluteSpacing, 0)
+        graphFont.setLetterSpacing(QtGui.QFont.SpacingType.AbsoluteSpacing, 0)
         graphItem.setFont(graphFont)
         namesTable.setItem(i, 1, graphItem)
         #
@@ -158,11 +156,11 @@ def makeNamelist(names):
         ioFont = QtGui.QFont("Courier New", 14)
         ioFont.setBold(True)
         ioItem.setFont(ioFont)
-        ioItem.setTextAlignment(Qt.AlignRight)
+        ioItem.setTextAlignment(Qt.Alignment.AlignRight)
         namesTable.setItem(i, 3, ioItem)
 
     namesTable.setVisible(False)
-    namesTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+    namesTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
     namesTable.setColumnWidth(1, 100)
     namesTable.resizeColumnToContents(2)
     namesTable.resizeColumnToContents(3)
@@ -189,13 +187,13 @@ def updateNamesTable():
             ioItem = table.item(j, 3)
             ioItem.setText(timeManager.getCurrentIO(name))
             if ioItem.text() == "i":
-                ioItem.setForeground(QtGui.QBrush(Qt.darkGreen))
+                ioItem.setForeground(QtGui.QBrush(Qt.GlobalColor.darkGreen))
             elif ioItem.text() == "o":
-                ioItem.setForeground(QtGui.QBrush(Qt.black))
+                ioItem.setForeground(QtGui.QBrush(Qt.GlobalColor.black))
             elif ioItem.text() == "a":
-                ioItem.setForeground(QtGui.QBrush(Qt.red))
+                ioItem.setForeground(QtGui.QBrush(Qt.GlobalColor.red))
             else:
-                ioItem.setForeground(QtGui.QBrush(Qt.yellow))
+                ioItem.setForeground(QtGui.QBrush(Qt.GlobalColor.yellow))
 
 
 def makeActions(app):
@@ -208,10 +206,10 @@ def makeActions(app):
 
     signI = QPushButton("IN")
     signO = QPushButton("OUT")
-    signI.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+    signI.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
     signI.setStyleSheet(
         'QPushButton {background-color: green; color: white; font-size: 28pt; font-weight: bold}')
-    signO.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+    signO.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
     signO.setStyleSheet(
         'QPushButton {background-color: red; color: white; font-size: 28pt; font-weight: bold}')
 
@@ -231,11 +229,11 @@ def makeActions(app):
     graph = QPushButton("Graph")
     update = QPushButton("Update")
     quit = QPushButton("Quit")
-    more.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-    newUser.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-    graph.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-    update.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-    quit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+    more.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+    newUser.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+    graph.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+    update.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+    quit.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
     quit.setStyleSheet('QPushButton {color: red}')
 
     update.clicked.connect(updateNamesTable)

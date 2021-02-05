@@ -9,8 +9,7 @@ except ImportError as e:
     loadOptions = False
 
 defaultOptions = {"title": "Timeclock", "logo": "time.png", "darkTheme": False, "addHoursBeforeSignout": True,
-                  "pathTime": "./times/", "autoClockoutTime": "04:00:00",
-                  "usernameFile": "usernameFile.txt", "adminPass": "",
+                  "pathTime": "./times/", "autoClockoutTime": "04:00:00", "adminPass": "",
                   "seasons": {"Build": {"start": "2020.01.04 00:00:00", "end": "2020.02.20 23:59:59", "hoursPerWeek": 0},
                               "Competition": {"start": "2020.02.20 23:59:59", "end": "2020.04.14 23:59:59", "hoursPerWeek": 0}},
                   "positions": ["Student", "Mentor", "Parent", "Other"],

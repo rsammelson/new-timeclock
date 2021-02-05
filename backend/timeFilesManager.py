@@ -4,7 +4,6 @@ import os
 import backend.processOptions as opts
 import rapidjson
 
-tempUserArray = {}
 
 def load():
     os.chdir(os.path.dirname(__file__))
